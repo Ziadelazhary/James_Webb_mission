@@ -1,0 +1,317 @@
+[gd_scene load_steps=16 format=2]
+
+[ext_resource path="res://asserts/scences/Board.tscn" type="PackedScene" id=1]
+[ext_resource path="res://asserts/backgroud/settings.png" type="Texture" id=3]
+[ext_resource path="res://asserts/Themes/custom_theme.tres" type="Theme" id=4]
+
+[sub_resource type="GDScript" id=12]
+script/source = "extends Control
+
+var is_started = false
+var game_won = false
+var start_epoch
+var current_epoch
+
+onready var board = $MarginContainer/VBoxContainer/GameView/Board
+
+onready var overlay = $MarginContainer/VBoxContainer/GameView/StartOverlay
+onready var overlay_text = $MarginContainer/VBoxContainer/GameView/StartOverlay/TextOverlay
+
+onready var move_value = $MarginContainer/VBoxContainer/StatsView/HBoxContainer/Moves/MoveValue
+onready var timer_value = $MarginContainer/VBoxContainer/StatsView/HBoxContainer/Time/TimeValue
+
+onready var anim_player = $AnimationPlayer
+func _ready():
+	overlay.visible = true
+
+func _process(_delta):
+	if is_started:
+		current_epoch = OS.get_ticks_msec()
+		var time_since_game_start = current_epoch - start_epoch
+		timer_value.text = str(floor(time_since_game_start/1000)) + 's'
+	else:
+		if not game_won:
+			timer_value.text = '0s'
+
+func _on_Board_game_started():
+	start_epoch = OS.get_ticks_msec()
+	overlay.visible = false
+	is_started = true
+	game_won = false
+
+
+func _on_Board_game_won():
+	overlay_text.text = 'Nice Work!\\n Click to play again'
+	overlay.visible = true
+	is_started = false
+	game_won = true
+
+
+func _on_RestartButton_pressed():
+	if not is_started:
+		return
+	board.reset_move_count()
+	board.scramble_board()
+	board.game_state = board.GAME_STATES.STARTED
+	start_epoch = OS.get_ticks_msec()
+	is_started = true
+
+
+func _on_Board_moves_updated(move_count):
+	move_value.text = str(move_count)
+
+
+func _on_SettingsScreen_board_size_update(new_size):
+	board.update_size(new_size)
+	overlay_text.text = 'Click to start'
+	overlay.visible = true
+	is_started = false
+
+
+func _on_SettingsScreen_show_numbers_update(state):
+	board.set_tile_numbers(state)
+
+
+func _on_SettingsButton_pressed():
+	anim_player.play(\"show_settings\")
+
+
+func _on_SettingsScreen_hide_settings():
+	anim_player.play_backwards(\"show_settings\")
+
+
+func _on_SettingsScreen_background_update(texture: ImageTexture):
+	print('updating background texture now')
+	board.update_background_texture(texture)
+"
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 0.2, 0.231373, 0.309804, 1 )
+
+[sub_resource type="StyleBoxFlat" id=2]
+bg_color = Color( 0.360784, 0.364706, 0.388235, 1 )
+
+[sub_resource type="StyleBoxFlat" id=3]
+bg_color = Color( 0.780392, 0.780392, 0.780392, 1 )
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color( 0, 0, 0, 1 )
+
+[sub_resource type="StyleBoxFlat" id=4]
+bg_color = Color( 0, 0, 0, 0.588235 )
+
+[sub_resource type="StyleBoxEmpty" id=5]
+
+[sub_resource type="StyleBoxEmpty" id=6]
+
+[sub_resource type="StyleBoxEmpty" id=7]
+
+[sub_resource type="StyleBoxEmpty" id=8]
+
+[sub_resource type="StyleBoxEmpty" id=9]
+
+[sub_resource type="Animation" id=10]
+length = 0.001
+
+[sub_resource type="Animation" id=11]
+resource_name = "show_settings"
+length = 0.2
+
+[node name="GameScene" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource( 4 )
+script = SubResource( 12 )
+
+[node name="Panel" type="Panel" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_styles/panel = SubResource( 1 )
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_constants/margin_right = 4
+custom_constants/margin_top = 4
+custom_constants/margin_left = 4
+custom_constants/margin_bottom = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+margin_left = 4.0
+margin_top = 4.0
+margin_right = 496.0
+margin_bottom = 576.0
+
+[node name="GameView" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
+margin_left = 11.0
+margin_right = 481.0
+margin_bottom = 470.0
+rect_min_size = Vector2( 470, 470 )
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="BackgroundBoard" type="Panel" parent="MarginContainer/VBoxContainer/GameView"]
+margin_right = 470.0
+margin_bottom = 470.0
+mouse_filter = 2
+custom_styles/panel = SubResource( 2 )
+
+[node name="Board" parent="MarginContainer/VBoxContainer/GameView" instance=ExtResource( 1 )]
+margin_right = 470.0
+margin_bottom = 470.0
+
+[node name="BoardBorder" type="Panel" parent="MarginContainer/VBoxContainer/GameView"]
+margin_right = 470.0
+margin_bottom = 470.0
+mouse_filter = 2
+custom_styles/panel = SubResource( 3 )
+
+[node name="StartOverlay" type="Panel" parent="MarginContainer/VBoxContainer/GameView"]
+visible = false
+margin_right = 470.0
+margin_bottom = 470.0
+mouse_filter = 2
+custom_styles/panel = SubResource( 4 )
+
+[node name="TextOverlay" type="Label" parent="MarginContainer/VBoxContainer/GameView/StartOverlay"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "Click To Start"
+align = 1
+valign = 1
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+margin_top = 474.0
+margin_right = 492.0
+margin_bottom = 478.0
+custom_styles/separator = SubResource( 5 )
+
+[node name="StatsView" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
+margin_top = 482.0
+margin_right = 492.0
+margin_bottom = 568.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_constants/margin_right = 8
+custom_constants/margin_left = 8
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/StatsView"]
+margin_left = 8.0
+margin_right = 484.0
+margin_bottom = 86.0
+size_flags_horizontal = 3
+
+[node name="VSeparator" type="VSeparator" parent="MarginContainer/VBoxContainer/StatsView/HBoxContainer"]
+margin_right = 8.0
+margin_bottom = 86.0
+custom_constants/separation = 8
+custom_styles/separator = SubResource( 6 )
+
+[node name="Time" type="VBoxContainer" parent="MarginContainer/VBoxContainer/StatsView/HBoxContainer"]
+margin_left = 12.0
+margin_right = 44.0
+margin_bottom = 86.0
+
+[node name="TimeTitle" type="Label" parent="MarginContainer/VBoxContainer/StatsView/HBoxContainer/Time"]
+margin_right = 32.0
+margin_bottom = 41.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Time"
+align = 1
+valign = 1
+
+[node name="TimeValue" type="Label" parent="MarginContainer/VBoxContainer/StatsView/HBoxContainer/Time"]
+margin_top = 45.0
+margin_right = 32.0
+margin_bottom = 86.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "0s"
+
+[node name="VSeparator2" type="VSeparator" parent="MarginContainer/VBoxContainer/StatsView/HBoxContainer"]
+margin_left = 48.0
+margin_right = 56.0
+margin_bottom = 86.0
+custom_constants/separation = 8
+custom_styles/separator = SubResource( 6 )
+
+[node name="Moves" type="VBoxContainer" parent="MarginContainer/VBoxContainer/StatsView/HBoxContainer"]
+margin_left = 60.0
+margin_right = 102.0
+margin_bottom = 86.0
+
+[node name="MoveTitle" type="Label" parent="MarginContainer/VBoxContainer/StatsView/HBoxContainer/Moves"]
+margin_right = 42.0
+margin_bottom = 41.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Moves"
+align = 1
+valign = 1
+
+[node name="MoveValue" type="Label" parent="MarginContainer/VBoxContainer/StatsView/HBoxContainer/Moves"]
+margin_top = 45.0
+margin_right = 42.0
+margin_bottom = 86.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "0"
+
+[node name="VSeparator3" type="VSeparator" parent="MarginContainer/VBoxContainer/StatsView/HBoxContainer"]
+margin_left = 106.0
+margin_right = 130.0
+margin_bottom = 86.0
+custom_constants/separation = 24
+custom_styles/separator = SubResource( 7 )
+
+[node name="RestartButton" type="Button" parent="MarginContainer/VBoxContainer/StatsView/HBoxContainer"]
+margin_left = 134.0
+margin_right = 287.0
+margin_bottom = 86.0
+size_flags_horizontal = 3
+text = "Restart"
+
+[node name="VSeparator4" type="VSeparator" parent="MarginContainer/VBoxContainer/StatsView/HBoxContainer"]
+margin_left = 291.0
+margin_right = 307.0
+margin_bottom = 86.0
+custom_constants/separation = 16
+custom_styles/separator = SubResource( 7 )
+
+[node name="SettingsButton" type="TextureButton" parent="MarginContainer/VBoxContainer/StatsView/HBoxContainer"]
+margin_left = 311.0
+margin_right = 464.0
+margin_bottom = 86.0
+rect_min_size = Vector2( 5, 5 )
+size_flags_horizontal = 3
+texture_normal = ExtResource( 3 )
+expand = true
+stretch_mode = 5
+
+[node name="VSeparator5" type="VSeparator" parent="MarginContainer/VBoxContainer/StatsView/HBoxContainer"]
+margin_left = 468.0
+margin_right = 476.0
+margin_bottom = 86.0
+custom_constants/separation = 8
+custom_styles/separator = SubResource( 8 )
+
+[node name="HSeparator2" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+margin_top = 572.0
+margin_right = 492.0
+margin_bottom = 572.0
+custom_constants/separation = 0
+custom_styles/separator = SubResource( 9 )
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+anims/RESET = SubResource( 10 )
+anims/show_settings = SubResource( 11 )
+
+[connection signal="game_started" from="MarginContainer/VBoxContainer/GameView/Board" to="." method="_on_Board_game_started"]
+[connection signal="game_won" from="MarginContainer/VBoxContainer/GameView/Board" to="." method="_on_Board_game_won"]
+[connection signal="moves_updated" from="MarginContainer/VBoxContainer/GameView/Board" to="." method="_on_Board_moves_updated"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/StatsView/HBoxContainer/RestartButton" to="." method="_on_RestartButton_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/StatsView/HBoxContainer/SettingsButton" to="." method="_on_SettingsButton_pressed"]

@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://asserts/scences/Tile.tscn" type="PackedScene" id=1]
+[ext_resource path="res://asserts/scences/Board.gd" type="Script" id=2]
+
+[node name="Board" type="Control"]
+margin_right = 500.0
+margin_bottom = 600.0
+script = ExtResource( 2 )
+tile_scene = ExtResource( 1 )
